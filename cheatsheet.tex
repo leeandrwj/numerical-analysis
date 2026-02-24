@@ -1,0 +1,339 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{parskip}
+\usepackage{amsmath}
+\usepackage{amssymb}  % for additional symbols (optional, but safe)
+\usepackage[margin=0.7in]{geometry}
+\usepackage{multicol}
+\usepackage{enumitem}
+
+%-------------------------------------------------------------------------------
+\subsection*{Floating Point Numbers}
+
+For any base $\beta$: 
+\[
+x = \pm r \times \beta^{n}, \qquad 1 \leq r < \beta.
+\]
+
+\paragraph{Single-Precision IEEE (32-bit):}
+\[
+\underbrace{(1 \text{ bit}) \text{ sign} = s}_{\text{sign}} \quad 
+\underbrace{(8 \text{ bits}) \text{ biased exponent} = c}_{\text{exponent}} \quad 
+\underbrace{(23 \text{ bits}) \text{ mantissa} = f}_{\text{mantissa}}
+\]
+\[
+(-1)^s \times 2^{c-127} \times (1.f)_2
+\]
+
+\subsubsection*{Steps for IEEE:}
+\begin{enumerate}
+    \item Convert into binary.
+    \item Write into normalized scientific notation (binary $\times 2^{k}$) where $k$ makes it of the form $1.xxxx$.
+    \item Compute $C$, $F$, $S$: $C=127+k$, $F$ is fractional bits of $1.F$, and $S=0$ (positive), $1$ (negative).
+\end{enumerate}
+
+\subsubsection*{Error Propagation:}
+Let $x \in \mathbb{R}$ and its floating point representation is written as $fl(x) = x(1+\delta)$.
+
+\medskip
+\textbf{Absolute error} = $|fl(x) - x|$
+
+\medskip
+\textbf{Relative error} = $\dfrac{|fl(x) - x|}{|x|}$
+
+\medskip
+\textbf{Loss of Significance:} 
+Subtracting close numbers cancels leading bits and can create large relative error. Reformulate expressions to avoid subtracting nearly equal quantities.
+
+\hrulefill
+
+%-------------------------------------------------------------------------------
+\subsection*{Numerical Approximations}
+
+We can use Taylor and Maclaurin series to represent smooth functions.
+\[
+f(x) = \sum_{i=0}^{\infty} \frac{f^{(i)}(c)}{i!}(x-c)^i
+\]
+
+Finite difference approximations:
+\[
+f'(a) \approx \frac{f(a+h)-f(a)}{h} \quad \text{(Forward Euler)}
+\]
+\[
+f'(a) \approx \frac{f(a)-f(a-h)}{h} \quad \text{(Backward Euler)}
+\]
+\[
+f'(a) \approx \frac{f(a+h)-f(a-h)}{2h} \quad \text{(Central Difference)}
+\]
+
+Additionally, you can solve order of accuracy by utilizing Taylor expansions:
+\[
+f(a+h) = \sum_{i=0}^{\infty} \frac{f^{(i)}(a)}{i!} h^i,\qquad 
+f(a-h) = \sum_{i=0}^{\infty} \frac{(-1)^i f^{(i)}(a)}{i!} h^i
+\]
+Substitute into your formula, cancel terms, and the first nonzero neglected term gives truncation error $O(h^p)$.
+
+\hrulefill
+
+%-------------------------------------------------------------------------------
+\subsection*{Root Finding}
+
+\subsubsection*{Bisection}
+
+\textbf{Given} $f(x)$ and $a, b \in \mathbb{R}$ s.t. $f(a)$ and $f(b)$ satisfies \textbf{I.V.T.}
+
+\textbf{While} stopping criterion$^{*}$ is \textbf{False}:
+\begin{enumerate}
+    \item \textbf{Estimate} $x_n = \dfrac{a_n + b_n}{2}$.
+    \item \textbf{If} $|f(x_n)| < \epsilon$, return $x_n$.
+    \item \textbf{If} $f(x_n) \cdot f(a_n) < 0$, $a_{n+1} = a_n$ and $b_{n+1} = x_n$.
+    \item \textbf{Else}, $a_{n+1} = x_n$ and $b_{n+1} = b_n$.
+    \item $n = n+1$, \textbf{Repeat}.
+\end{enumerate}
+
+\textbf{$^{*}$Stopping criterion is either number of iterations,} $|b-a| < \epsilon$, \textbf{and} $|f(c)| < \epsilon$.
+
+\subsubsection*{Error and Iteration Estimate for Bisection}
+\textbf{Denote} the interval of the $n$-th iteration as $[a_n, b_n]$, \textbf{then} the numerical error becomes
+\[
+E_n = |c_n - r| \leq \frac{1}{2^n} |b_0 - a_0|.
+\]
+
+\textbf{Given} tolerance is $\epsilon$, we want $E_n \leq \epsilon$, namely
+\[
+\frac{|b-a|}{2^n} \leq \epsilon \quad\Longrightarrow\quad n \geq \log_2 \frac{b-a}{\epsilon}.
+\]
+
+%-------------------------------------------------------------------------------
+\subsection*{Fixed-Point Iteration}
+
+Let $f(x)$ be continuous on an interval $[a,b]$ that contains a root $r$, i.e., $f(r)=0$.  
+Rewrite the equation $f(x)=0$ in the equivalent fixed-point form
+\[
+x = x - f(x)g(x),
+\]
+where $g : [a,b] \to \mathbb{R}$ and $g(r) \neq 0$.
+
+Choose an initial guess $x_0 \in [a,b]$ and define the iterative scheme
+\[
+x_{n+1} = x_n - f(x_n)g(x_n), \quad n = 0,1,2,\dots
+\]
+Continue the iteration until a prescribed tolerance is satisfied, for example
+\[
+|x_{n+1} - x_n| < \varepsilon.
+\]
+
+\subsubsection*{Error Relation}
+Let $E_n = |x_n - r|$ denote the error at step $n$.  
+If $g$ is differentiable, then by the Mean Value Theorem there exists $\xi$ between $x_n$ and $r$ such that
+\[
+E_{n+1} = |x_{n+1} - r| = |g(x_n) - g(r)| = |g'(\xi)|\,E_n.
+\]
+
+\subsubsection*{Convergence Conditions}
+The iteration converges to $r$ if:
+\begin{enumerate}
+    \item $r = g(r)$,
+    \item $|g'(r)| < 1$ (local convergence),
+    \item $|g'(x)| < 1 \quad \forall x \in [a,b]$ (guaranteed convergence on $[a,b]$).
+\end{enumerate}
+
+\vspace{12pt}
+
+%-------------------------------------------------------------------------------
+\subsection*{Newton's Method}
+
+An application of fixed point where $g(x) = \dfrac{1}{f'(x)}$:
+\[
+x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}, \quad n = 0,1,2,\dots
+\]
+Choose an initial guess $x_0$ sufficiently close to $r$ and iterate until a prescribed tolerance is met, for example
+\[
+|x_{n+1} - x_n| < \varepsilon.
+\]
+
+\subsubsection*{Requirements for Quadratic Convergence}
+If $f'(r) \neq 0$, Newton's method exhibits quadratic convergence.
+
+\subsubsection*{Convergence Conditions}
+Newton's method converges to $r$ if:
+\begin{enumerate}
+    \item $f(r) = 0$,
+    \item $f'(r) \neq 0$ (simple root),
+    \item $x_0$ is sufficiently close to $r$,
+    \item $f$ is twice continuously differentiable near $r$.
+\end{enumerate}
+
+\subsection*{Secant Method}
+
+Approximates $f'(x_n)$ using finite differences.
+\[
+x_{n+1} = x_n - f(x_n) \frac{x_n - x_{n-1}}{f(x_n) - f(x_{n-1})}
+\]
+
+\textbf{Algorithm:}
+\begin{enumerate}
+    \item Choose $x_0, x_1$.
+    \item Compute $x_{n+1}$ using formula above.
+    \item Stop if $|x_{n+1} - x_n| < \varepsilon$.
+\end{enumerate}
+Requires no derivative evaluation.
+
+\hrulefill
+
+%-------------------------------------------------------------------------------
+\subsection*{LU Decomposition}
+
+Suppose we have an $n\times n$ matrix where $A$ is invertible.
+
+Let
+\[
+A = \begin{bmatrix}
+a_{1,1} & a_{1,2} & \cdots & a_{1,n}\\[2pt]
+a_{2,1} & . &       & . \\[2pt]
+.       &   & .     & . \\[2pt]
+.       & \cdots & a_{n,n-1} & a_{n,n}
+\end{bmatrix}
+\]
+The matrix $U$ is the row-echelon form of $A$ after elimination; multipliers fill $L$.
+
+\subsubsection*{Algorithm (Doolittle, no pivoting)}
+Goal: $A=LU$ with $L$ unit lower triangular and $U$ upper triangular.
+\begin{enumerate}
+    \item Set $L=I$, $U=A$.
+    \item For $k=1,\dots,n-1$:
+    \begin{enumerate}
+        \item Require pivot $U_{k,k}\neq 0$.
+        \item For $i=k+1,\dots,n$: set multiplier $m_{ik}=U_{i,k}/U_{k,k}$.
+        \item Store $L_{i,k}=m_{ik}$.
+        \item Row update on $U$: $U_{i,k:n}=U_{i,k:n}-m_{ik}U_{k,k:n}$.
+    \end{enumerate}
+    \item Solve systems using forward substitution ($Ly=b$), then backward substitution ($Ux=y$).
+\end{enumerate}
+
+\textbf{Requirements / limits:}
+\begin{itemize}
+    \item No-pivot LU can fail if a pivot is zero or very small.
+    \item For stability in practice, use pivoting ($PA=LU$).
+\end{itemize}
+
+\subsubsection*{Gaussian Elimination with Partial Pivoting}
+Goal: Solve $Ax=b$ stably and/or compute $PA=LU$.
+\begin{enumerate}
+    \item For each column $k=1,\dots,n-1$, choose pivot row
+    \[
+    p=\arg\max_{i\ge k}|A_{i,k}|.
+    \]
+    \item Swap rows $k$ and $p$ in $A$ (and in $b$; record in permutation $P$).
+    \item If $A_{k,k}=0$ after swap, matrix is singular (stop).
+    \item For $i=k+1,\dots,n$: compute $m_{ik}=A_{i,k}/A_{k,k}$ and eliminate
+    \[
+    A_{i,k:n}=A_{i,k:n}-m_{ik}A_{k,k:n},\quad b_i=b_i-m_{ik}b_k.
+    \]
+    \item Back-substitute from upper-triangular system.
+\end{enumerate}
+
+\textbf{Requirements / limits:}
+\begin{itemize}
+    \item Partial pivoting greatly improves stability vs no pivoting.
+    \item Growth factor can still be large for rare matrices; complete pivoting is more robust but costlier.
+\end{itemize}
+
+\subsubsection*{Matrix Norms and Condition Number}
+For nonsingular $A$, condition number in norm $\|\cdot\|$:
+\[
+\kappa(A)=\|A\|\,\|A^{-1}\|\ge 1.
+\]
+Large $\kappa(A)$ means sensitivity to perturbations in data/roundoff.
+
+\textbf{Norms used in practice:}
+\[
+\|A\|_1=\max_j\sum_i|a_{ij}| \quad (\text{column-sum norm})
+\]
+\[
+\|A\|_\infty=\max_i\sum_j|a_{ij}| \quad (\text{row-sum norm})
+\]
+\[
+\|A\|_F=\left(\sum_{i,j}|a_{ij}|^2\right)^{1/2} \quad (\text{Frobenius norm})
+\]
+\[
+\|A\|_2=\sigma_{\max}(A)=\sqrt{\lambda_{\max}(A^TA)} \quad (2\text{-norm})
+\]
+
+\textbf{Computational steps:}
+\begin{enumerate}
+    \item Choose norm (often $1$ or $\infty$ for cheap computation).
+    \item Compute $\|A\|$ from entries.
+    \item Compute/estimate $\|A^{-1}\|$ (usually via linear solves, not explicit inverse).
+    \item Return $\kappa(A)=\|A\|\,\|A^{-1}\|$.
+\end{enumerate}
+
+\textbf{Important limits:}
+\begin{itemize}
+    \item Explicitly forming $A^{-1}$ is expensive and can be unstable.
+    \item Different norms give different $\kappa$ values, but all indicate conditioning.
+\end{itemize}
+
+\vspace{10pt}
+\hrulefill
+
+%-------------------------------------------------------------------------------22
+\subsection*{Newton's Method for Systems}
+
+Let $F:\mathbb{R}^n \to \mathbb{R}^n$. We seek $F(x)=0$.
+
+Define the Jacobian:
+\[
+J_F(x) = 
+\begin{bmatrix}
+\frac{\partial f_1}{\partial x_1} & \cdots & \frac{\partial f_1}{\partial x_n} \\
+\vdots & & \vdots \\
+\frac{\partial f_n}{\partial x_1} & \cdots & \frac{\partial f_n}{\partial x_n}
+\end{bmatrix}
+\]
+
+Newton iteration:
+\[
+J_F(x_n)\, s_n = -F(x_n),\qquad x_{n+1} = x_n + s_n.
+\]
+
+Quadratic convergence holds if:
+\begin{enumerate}
+    \item $J_F(r)$ is nonsingular,
+    \item $F$ is continuously differentiable,
+    \item $x_0$ sufficiently close to $r$.
+\end{enumerate}
+
+\subsection*{Broyden's Method (for Systems)}
+Quasi-Newton method: avoid recomputing Jacobian every step.
+
+Start with $x_0$, initial Jacobian approximation $B_0$ (often $J_F(x_0)$ or $I$).
+
+For $n=0,1,2,\dots$:
+\begin{enumerate}
+    \item Solve linear system
+    \[
+    B_n s_n = -F(x_n).
+    \]
+    \item Update iterate: $x_{n+1}=x_n+s_n$.
+    \item Compute
+    \[
+    y_n=F(x_{n+1})-F(x_n).
+    \]
+    \item Rank-1 update (good Broyden):
+    \[
+    B_{n+1}=B_n+\frac{(y_n-B_n s_n)s_n^T}{s_n^Ts_n}.
+    \]
+    \item Stop when $\|F(x_{n+1})\|<\varepsilon$ or $\|s_n\|<\varepsilon$.
+\end{enumerate}
+
+\textbf{Requirements / limits:}
+\begin{itemize}
+    \item Need $B_n$ nonsingular for the step solve.
+    \item Usually superlinear (not quadratic like exact Newton near root).
+    \item Often cheaper per iteration than Newton for large systems.
+\end{itemize}
+
+\end{multicols}
+\end{document}
